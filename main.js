@@ -27,8 +27,14 @@ function loadProjects() {
     const savedProjects = localStorage.getItem("projects");
     if (savedProjects) {
         projects = JSON.parse(savedProjects);
+        if (projects.length > 0) {
+            activeProjectIndex = 0;
+        } else {
+            activeProjectIndex = -1;
+        }
     }
     displayProjects();
+    displayTasks();
 }
 
 function displayProjects() {
@@ -154,17 +160,15 @@ function renderCalendar(){
         month: "long",
         year: "numeric"
     });
-
-    // Empty boxes before day 1
     for (let i = 0; i < firstDay; i++) {
         const empty = document.createElement("div");
+        empty.classList.add("calendar-day-cell", "empty-slot");
         calendarGrid.appendChild(empty);
     }
 
-    // Days
     for (let day = 1; day <= totalDays; day++) {
         const cell = document.createElement("div");
-        cell.classList.add("day");
+        cell.classList.add("calendar-day-cell");
         cell.textContent = day;
 
         const today = new Date();
@@ -174,21 +178,21 @@ function renderCalendar(){
 
         if (hasEvent) {
             const dot = document.createElement("div");
-            dot.classList.add("event-dot");
+            dot.style.cssText = "width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; margin-top: 4px;";
             cell.appendChild(dot);
         }
 
         if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
-            cell.classList.add("today");
+            cell.style.borderColor = "#3b82f6";
+            cell.style.color = "#3b82f6";
         }
 
-        // Keep active selection style persistent if navigating months
         if (selectedDate === dateString) {
             cell.classList.add("selected-day");
         }
 
         cell.addEventListener("click", () => {
-            document.querySelectorAll(".day").forEach(d => d.classList.remove("selected-day"));
+            document.querySelectorAll(".calendar-day-cell").forEach(d => d.classList.remove("selected-day"));
             cell.classList.add("selected-day");
 
             selectedDate = dateString;
@@ -210,10 +214,13 @@ function renderEvents() {
 
     events.forEach(event => {
         const div = document.createElement("div");
-        div.classList.add("event-item");
+        div.classList.add("project-item");
+        div.style.cursor = "default";
         div.innerHTML = `
             <span>${event.title}</span>
-            <button class="event-delete" data-id="${event.id}">🗑</button>
+            <button class="project-delete-btn event-delete" data-id="${event.id}">
+                <img src="delete.png" alt="Delete" style="width:16px; height:16px;">
+            </button>
         `;
         eventList.appendChild(div);
     });
@@ -303,8 +310,10 @@ projectBtn.addEventListener("click", () => {
     projectInput.value = "";
 });
 
-// Single Unified Calendar Button Trigger
 calendarBtn.addEventListener("click", () => {
+    const today = new Date();
+    selectedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    document.getElementById("selectedDate").textContent = selectedDate;
     renderCalendar();
     renderEvents();
     calendarDialog.showModal();
@@ -358,13 +367,15 @@ addEventBtn.addEventListener("click", () => {
 });
 
 document.getElementById("eventList").addEventListener("click", (e) => {
-    if (e.target.classList.contains("event-delete")) {
-        const id = Number(e.target.dataset.id);
+    const delBtn = e.target.closest(".event-delete");
+    if (delBtn) {
+        const id = Number(delBtn.dataset.id);
         calendarEvents = calendarEvents.filter(event => event.id !== id);
         saveEvents();
         renderEvents();
         renderCalendar();
     }
 });
-loadProjects();
+
 loadEvents();
+loadProjects();s
