@@ -1,601 +1,381 @@
+const addTaskBtn = document.getElementById("addtskbtn");
+const addTaskPopup = document.getElementById("addtaskpopup");
+const addTaskForm = document.getElementById("addTaskForm");
+const cardContainer = document.getElementById("tasks-container");
 
-:root {
-    --bg-primary: #121214;
-    --bg-secondary: #1a1a1e;
-    --bg-surface: #26262b;
-    --bg-surface-hover: #323238;
+const projectBtn = document.getElementById("addProjectBtn");
+const projectInput = document.getElementById("newProjectInput");
+const projectsContainer = document.getElementById("projects-container");
+const taskCount = document.getElementById("task-count");
+const calendarGrid = document.getElementById("calendarGrid");
+const monthYear = document.getElementById("monthYear");
+const calendarBtn = document.getElementById("calendarBtn");
+const calendarDialog = document.getElementById("calendarDialog");
+const closeCalendar = document.getElementById("closeCalendar");
+
+let projects = [];
+let activeProjectIndex = -1;
+let currentDate = new Date();
+let selectedDate = null;
+let calendarEvents = [];
+
+function saveProjects() {
+    localStorage.setItem("projects", JSON.stringify(projects));
+}
+
+function loadProjects() {
+    const savedProjects = localStorage.getItem("projects");
+    if (savedProjects) {
+        projects = JSON.parse(savedProjects);
+        if (projects.length > 0) {
+            activeProjectIndex = 0;
+        } else {
+            activeProjectIndex = -1;
+        }
+    }
+    displayProjects();
+    displayTasks();
+}
+
+function displayProjects() {
+    projectsContainer.innerHTML = "";
+
+    projects.forEach((project, index) => {
+        const div = document.createElement("div");
+        div.classList.add("project-item");
+        if (index === activeProjectIndex) {
+            div.classList.add("active");
+        }
+
+        div.innerHTML = `
+            <span>${project.name}</span>
+            <button class="project-delete-btn"><img src="delete.png" alt="Delete"></button>
+        `;
+
+        div.addEventListener("click", () => {
+            activeProjectIndex = index;
+            displayProjects();
+            displayTasks();
+        });
+        const deleteBtn = div.querySelector(".project-delete-btn");
+        deleteBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const ans = confirm("Are you sure you want to delete this project?");
+            if (ans) {
+                projects.splice(index, 1);
+
+                if (activeProjectIndex === index) {
+                    activeProjectIndex = -1;
+                    cardContainer.innerHTML = "";
+                } else if (activeProjectIndex > index) {
+                    activeProjectIndex--;
+                }
+
+                saveProjects();
+                displayProjects();
+                displayTasks(); 
+            }
+        });
+
+        projectsContainer.appendChild(div);
+    });
+}
+
+function displayTasks() {
+    cardContainer.innerHTML = "";
+
+    if (activeProjectIndex === -1) {
+        taskCount.textContent = "0 Tasks Remaining";
+        return;
+    }
+    const currentProject = projects[activeProjectIndex];
     
-    --text-primary: #f3f4f6;
-    --text-secondary: #9ca3af;
-    --text-muted: #6b7280;
-    
-    --accent: #6366f1;
-    --accent-hover: #4f46e5;
-    --success: #10b981;
-    --danger: #ef4444;
-    --border-color: #374151;
-    
-    --radius-sm: 6px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-
-.top {
-    background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
-    padding: 0.75rem 1.5rem;
-}
-
-.navbar {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.logo {
-    font-size: 1.25rem;
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    color: var(--text-primary);
-    margin-right: auto;
-}
-
-/* Button UI Components */
-.navbutton, .btn {
-    background-color: var(--accent);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-    font-weight: 500;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.navbutton:hover, .btn:hover {
-    background-color: var(--accent-hover);
-}
-
-#calendarBtn {
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-}
-
-#calendarBtn:hover {
-    background-color: var(--bg-surface-hover);
-    color: var(--text-primary);
-}
-
-
-.main-content {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-}
-
-
-.sidebar {
-    width: 280px;
-    background-color: var(--bg-secondary);
-    border-right: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    padding: 1.5rem 1rem;
-}
-
-.project-list {
-    flex: 1;
-    overflow-y: auto;
-}
-
-.project-list h3 {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    margin-bottom: 0.75rem;
-    padding-left: 0.5rem;
-}
-
-#projects-container {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.project-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.6rem 0.75rem;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: var(--transition);
-    color: var(--text-secondary);
-}
-
-.project-item:hover, .project-item.active {
-    background-color: var(--bg-surface);
-    color: var(--text-primary);
-}
-
-.project-item.active {
-    font-weight: 600;
-    border-left: 3px solid var(--accent);
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-}
-
-.project-delete-btn {
-    background: none;
-    border: none;
-    opacity: 0;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.project-item:hover .project-delete-btn {
-    opacity: 0.6;
-}
-
-.project-item:hover .project-delete-btn:hover {
-    opacity: 1;
-}
-
-.project-delete-btn img {
-    width: 14px;
-    height: 14px;
-    filter: invert(1);
-}
-
-/* Inline Form To Add Projects */
-.add-project-inline {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-color);
-}
-
-.add-project-inline input {
-    flex: 1;
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 0.5rem;
-    color: var(--text-primary);
-}
-
-.add-project-inline input:focus {
-    outline: 1px solid var(--accent);
-}
-
-#addProjectBtn {
-    background-color: var(--bg-surface-hover);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    width: 36px;
-    cursor: pointer;
-    font-size: 1.2rem;
-    transition: var(--transition);
-}
-
-#addProjectBtn:hover {
-    background-color: var(--accent);
-    border-color: var(--accent);
-}
-.task-list {
-    flex: 1;
-    padding: 2rem;
-    overflow-y: auto;
-    background-color: var(--bg-primary);
-}
-
-.task-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 0.75rem;
-}
-
-.task-header h2 {
-    font-size: 1.5rem;
-    font-weight: 600;
-}
-
-.task-count {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-}
-
-/* Task Container & Dynamic Cards */
-.tasks-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1xl));
-    gap: 1rem;
-}
-
-.task-card {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 1.25rem;
-    display: flex;
-    gap: 1rem;
-    position: relative;
-    transition: var(--transition);
-}
-
-.task-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--bg-surface-hover);
-    box-shadow: var(--shadow);
-}
-
-
-.complete-btn {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: 2px solid var(--text-muted);
-    background: transparent;
-    cursor: pointer;
-    flex-shrink: 0;
-    margin-top: 3px;
-    transition: var(--transition);
-}
-
-.complete-btn:hover {
-    border-color: var(--success);
-    background-color: rgba(16, 185, 129, 0.1);
-}
-
-.task-card.completed .complete-btn {
-    background-color: var(--success);
-    border-color: var(--success);
-}
-
-.task-card.completed .task-content h3,
-.task-card.completed .task-content p {
-    text-decoration: line-through;
-    color: var(--text-muted);
-}
-
-/* Task Texts */
-.task-content {
-    flex: 1;
-}
-
-.task-content h3 {
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin-bottom: 0.35rem;
-}
-
-.task-content p {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    margin-bottom: 1rem;
-    line-height: 1.4;
-}
-
-.task-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.task-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 20px;
-    background-color: var(--bg-surface);
-}
-
-.tag-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-}
-
-.deadline-tag .tag-dot { background-color: var(--accent); }
-.added-tag .tag-dot { background-color: var(--text-muted); }
-.overdue-tag {
-    color: var(--danger);
-    background-color: rgba(239, 68, 68, 0.1);
-}
-.overdue-tag .tag-dot { background-color: var(--danger); }
-
-/* Card Actions */
-.task-buttons {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-}
-
-.delete-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    opacity: 0;
-    transition: var(--transition);
-}
-
-.task-card:hover .delete-btn {
-    opacity: 0.5;
-}
-
-.task-card:hover .delete-btn:hover {
-    opacity: 1;
-}
-
-.delete-btn img {
-    filter: invert(0.4) sepia(1) saturate(5) hue-rotate(340deg);
-}
-
-dialog {
-    background: transparent;
-    border: none;
-    margin: auto;
-    padding: 0;
-}
-
-dialog::backdrop {
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
-}
-
-.modal-content {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 2rem;
-    width: 400px;
-    box-shadow: var(--shadow);
-    color: var(--text-primary);
-}
-
-.modal-content h2 {
-    font-size: 1.25rem;
-    margin-bottom: 1.5rem;
-}
-
-/* Modular Form Layouts */
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    margin-bottom: 1.25rem;
-}
-
-.form-group label {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-}
-
-.form-group input, .form-group textarea {
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 0.6rem;
-    color: var(--text-primary);
-    font-family: inherit;
-    font-size: 0.9rem;
-}
-
-.form-group textarea {
-    resize: none;
-    height: 80px;
-}
-
-.form-group input:focus, .form-group textarea:focus {
-    outline: 1px solid var(--accent);
-}
-
-.modal-content .btn {
-    width: 100%;
-    padding: 0.65rem;
-    margin-top: 0.5rem;
-}
-
-.calendar-popup {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    width: 700px;
-    box-shadow: var(--shadow);
-    overflow: hidden;
-    color: var(--text-primary);
-}
-
-.calendar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-#closeCalendar {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-
-#closeCalendar:hover {
-    color: var(--danger);
-}
-
-.calendar-body {
-    display: flex;
-    height: 400px;
-}
-
-.calendar-left {
-    flex: 1.2;
-    padding: 1.5rem;
-    border-right: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-}
-
-.month-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-}
-
-.month-header button {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-size: 1rem;
-}
-
-.month-header button:hover {
-    color: var(--text-primary);
-}
-
-.weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    text-align: center;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    margin-bottom: 0.5rem;
-}
-
-.calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-auto-rows: 1fr;
-    gap: 4px;
-    flex: 1;
-}
-
-.calendar-grid .day {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-size: 0.85rem;
-    position: relative;
-    transition: var(--transition);
-}
-
-.calendar-grid .day:hover {
-    background-color: var(--bg-surface);
-}
-
-.calendar-grid .day.today {
-    color: var(--accent);
-    font-weight: 700;
-}
-
-.calendar-grid .day.selected-day {
-    background-color: var(--accent);
-    color: white !important;
-}
-
-
-.event-dot {
-    width: 4px;
-    height: 4px;
-    background-color: var(--success);
-    border-radius: 50%;
-    position: absolute;
-    bottom: 4px;
-}
-
-
-.calendar-right {
-    flex: 0.8;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    background-color: rgba(0, 0, 0, 0.15);
-}
-
-#selectedDate {
-    font-size: 0.95rem;
-    font-weight: 600;
-    margin-bottom: 0.75rem;
-    color: var(--text-secondary);
-}
-
-#eventList {
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.event-item {
-    background-color: var(--bg-surface);
-    border-radius: var(--radius-sm);
-    padding: 0.5rem 0.75rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.85rem;
-}
-
-.event-delete {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-}
-
-.event-delete:hover {
-    color: var(--danger);
-}
-
-#eventTitle {
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 0.5rem;
-    color: var(--text-primary);
-    font-size: 0.85rem;
-    margin-bottom: 0.5rem;
-}
-
-#eventTitle:focus {
-    outline: 1px solid var(--accent);
-}
+    const remainingTasks = currentProject.tasks.filter(task => !task.completed).length;
+
+    taskCount.textContent = `${remainingTasks} Task${remainingTasks !== 1 ? "s" : ""} Remaining`;
+
+    currentProject.tasks.forEach((task, index) => {
+        const card = document.createElement("div");
+        card.classList.add("task-card");
+        
+        if (task.completed) {
+            card.classList.add("completed");
+        }
+
+        const formattedDate = task.dueDate ? new Date(task.dueDate).toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        }) : "No deadline";
+
+        const addedDate = new Date(task.createdAt).toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric"
+        });
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const isOverdue = task.dueDate && new Date(task.dueDate) < today && !task.completed;       
+        
+        card.innerHTML = `
+            <button class="complete-btn" data-index="${index}" title="Mark as complete"></button>
+            
+            <div class="task-content">
+                <h3>${task.title}</h3>
+                <p>${task.description || ''}</p>
+                <div class="task-tags">
+                    <div class="task-tag ${isOverdue ? 'overdue-tag' : 'deadline-tag'}">
+                        <span class="tag-dot"></span>
+                         ${task.dueDate ? (isOverdue ? `Overdue ${formattedDate}` : `Due ${formattedDate}`) : "No deadline"}
+                    </div>
+                    <div class="task-tag added-tag">
+                        <span class="tag-dot"></span>
+                        Added ${addedDate}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="task-buttons">
+                <button class="delete-btn close-btn" data-index="${index}">
+                    <img src="delete.png" alt="Delete" style="width: 20px; height: 20px; pointer-events: none;">
+                </button>
+            </div>
+        `;
+
+        cardContainer.appendChild(card);
+    });
+}
+
+function renderCalendar(){
+    calendarGrid.innerHTML = "";
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    monthYear.textContent = currentDate.toLocaleString("default", {
+        month: "long",
+        year: "numeric"
+    });
+    for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement("div");
+        empty.classList.add("calendar-day-cell", "empty-slot");
+        calendarGrid.appendChild(empty);
+    }
+
+    for (let day = 1; day <= totalDays; day++) {
+        const cell = document.createElement("div");
+        cell.classList.add("calendar-day-cell");
+        cell.textContent = day;
+
+        const today = new Date();
+        const dateString = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+        const hasEvent = calendarEvents.some(event => event.date === dateString);
+
+        if (hasEvent) {
+            const dot = document.createElement("div");
+            dot.style.cssText = "width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; margin-top: 4px;";
+            cell.appendChild(dot);
+        }
+
+        if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+            cell.style.borderColor = "#3b82f6";
+            cell.style.color = "#3b82f6";
+        }
+
+        if (selectedDate === dateString) {
+            cell.classList.add("selected-day");
+        }
+
+        cell.addEventListener("click", () => {
+            document.querySelectorAll(".calendar-day-cell").forEach(d => d.classList.remove("selected-day"));
+            cell.classList.add("selected-day");
+
+            selectedDate = dateString;
+            document.getElementById("selectedDate").textContent = selectedDate;
+            renderEvents();
+        });
+
+        calendarGrid.appendChild(cell);
+    }
+}
+
+function renderEvents() {
+    const eventList = document.getElementById("eventList");
+    eventList.innerHTML = "";
+
+    if (!selectedDate) return;
+
+    const events = calendarEvents.filter(event => event.date === selectedDate);
+
+    events.forEach(event => {
+        const div = document.createElement("div");
+        div.classList.add("project-item");
+        div.style.cursor = "default";
+        div.innerHTML = `
+            <span>${event.title}</span>
+            <button class="project-delete-btn event-delete" data-id="${event.id}">
+                <img src="delete.png" alt="Delete" style="width:16px; height:16px;">
+            </button>
+        `;
+        eventList.appendChild(div);
+    });
+}
+
+function loadEvents() {
+    const saved = localStorage.getItem("calendarEvents");
+    if (saved) {
+        calendarEvents = JSON.parse(saved);
+    }
+}
+
+function saveEvents() {
+    localStorage.setItem("calendarEvents", JSON.stringify(calendarEvents));
+}
+
+cardContainer.addEventListener("click", (e) => {
+    const completeBtn = e.target.closest(".complete-btn");
+    if (completeBtn) {
+        const taskIndex = Number(completeBtn.dataset.index);
+        projects[activeProjectIndex].tasks[taskIndex].completed = !projects[activeProjectIndex].tasks[taskIndex].completed;
+        saveProjects();
+        displayTasks();
+        return;
+    }
+
+    const deleteBtn = e.target.closest(".close-btn");
+    if (deleteBtn) {
+        const taskIndex = Number(deleteBtn.dataset.index);
+        deltask(activeProjectIndex, taskIndex);
+    }
+});
+
+function deltask(projectIndex, taskIndex) {
+    projects[projectIndex].tasks.splice(taskIndex, 1);
+    saveProjects();
+    displayTasks();
+}
+
+addTaskBtn.addEventListener("click", () => {
+    addTaskPopup.showModal();
+});
+
+addTaskPopup.addEventListener("click", (e) => {
+    if (e.target === addTaskPopup) {
+        addTaskPopup.close();
+    }
+});
+
+addTaskForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    if (activeProjectIndex === -1) {
+        alert("Please select a project first.");
+        return;
+    }
+
+    const taskName = document.getElementById("taskName").value;
+    const taskDescription = document.getElementById("taskDescription").value;
+    const dueDate = document.getElementById("duedate").value;
+
+    projects[activeProjectIndex].tasks.push({
+        title: taskName,
+        description: taskDescription,
+        dueDate: dueDate,
+        createdAt: new Date().toISOString(),
+        completed: false 
+    });
+
+    saveProjects();
+    displayTasks();
+    addTaskForm.reset();
+    addTaskPopup.close();
+});
+
+projectBtn.addEventListener("click", () => {
+    const projectName = projectInput.value.trim();
+    if (projectName === "") return;
+
+    projects.push({
+        name: projectName,
+        tasks: []
+    });
+
+    saveProjects();
+    displayProjects();
+    projectInput.value = "";
+});
+
+calendarBtn.addEventListener("click", () => {
+    const today = new Date();
+    selectedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    document.getElementById("selectedDate").textContent = selectedDate;
+    renderCalendar();
+    renderEvents();
+    calendarDialog.showModal();
+});
+
+closeCalendar.addEventListener("click", () => {
+    calendarDialog.close();
+});
+
+calendarDialog.addEventListener("click", (e) => {
+    if (e.target === calendarDialog) {
+        calendarDialog.close();
+    }   
+});
+
+document.getElementById("prevMonth").addEventListener("click", () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar();
+});
+
+document.getElementById("nextMonth").addEventListener("click", () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar();
+});
+
+const addEventBtn = document.getElementById("addEventBtn");
+const eventTitle = document.getElementById("eventTitle");
+
+addEventBtn.addEventListener("click", () => {
+    if (!selectedDate) {
+        alert("Select a date first.");
+        return;
+    }
+
+    if (eventTitle.value.trim() === "") {
+        alert("Enter an event name.");
+        return;
+    }
+
+    calendarEvents.push({
+        id: Date.now(),
+        date: selectedDate,
+        title: eventTitle.value.trim()
+    });
+
+    saveEvents();
+    renderEvents();
+    renderCalendar();
+
+    eventTitle.value = "";
+});
+
+document.getElementById("eventList").addEventListener("click", (e) => {
+    const delBtn = e.target.closest(".event-delete");
+    if (delBtn) {
+        const id = Number(delBtn.dataset.id);
+        calendarEvents = calendarEvents.filter(event => event.id !== id);
+        saveEvents();
+        renderEvents();
+        renderCalendar();
+    }
+});
+
+loadEvents();
+loadProjects();s
