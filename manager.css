@@ -1,6 +1,4 @@
-/* ==========================================================================
-   1. RESET & VARIABLE DEFINITIONS
-   ========================================================================== */
+
 :root {
     --bg-primary: #121214;
     --bg-secondary: #1a1a1e;
@@ -40,9 +38,7 @@ body {
     overflow: hidden;
 }
 
-/* ==========================================================================
-   2. NAVBAR & HEADER
-   ========================================================================== */
+
 .top {
     background-color: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
@@ -91,16 +87,14 @@ body {
     color: var(--text-primary);
 }
 
-/* ==========================================================================
-   3. MAIN WORKSPACE CONTENT
-   ========================================================================== */
+
 .main-content {
     display: flex;
     flex: 1;
     overflow: hidden;
 }
 
-/* Sidebar Styling */
+
 .sidebar {
     width: 280px;
     background-color: var(--bg-secondary);
@@ -211,10 +205,6 @@ body {
     background-color: var(--accent);
     border-color: var(--accent);
 }
-
-/* ==========================================================================
-   4. TASK LIST WORKSPACE
-   ========================================================================== */
 .task-list {
     flex: 1;
     padding: 2rem;
@@ -265,7 +255,7 @@ body {
     box-shadow: var(--shadow);
 }
 
-/* Completion Checkbox Simulation */
+
 .complete-btn {
     width: 20px;
     height: 20px;
@@ -312,7 +302,6 @@ body {
     line-height: 1.4;
 }
 
-/* Badges / Tags */
 .task-tags {
     display: flex;
     flex-wrap: wrap;
@@ -370,9 +359,6 @@ body {
     filter: invert(0.4) sepia(1) saturate(5) hue-rotate(340deg);
 }
 
-/* ==========================================================================
-   5. DIALOGS & MODALS (Native HTML5 <dialog>)
-   ========================================================================== */
 dialog {
     background: transparent;
     border: none;
@@ -438,9 +424,6 @@ dialog::backdrop {
     margin-top: 0.5rem;
 }
 
-/* ==========================================================================
-   6. CALENDAR POPUP GRAPHICS SYSTEM
-   ========================================================================== */
 .calendar-popup {
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
@@ -476,7 +459,6 @@ dialog::backdrop {
     height: 400px;
 }
 
-/* Calendar Left Pane */
 .calendar-left {
     flex: 1.2;
     padding: 1.5rem;
@@ -548,7 +530,7 @@ dialog::backdrop {
     color: white !important;
 }
 
-/* Subtle dot inside cell when tracking schedules */
+
 .event-dot {
     width: 4px;
     height: 4px;
@@ -558,7 +540,7 @@ dialog::backdrop {
     bottom: 4px;
 }
 
-/* Calendar Right Side Pane (Mini scheduler updates) */
+
 .calendar-right {
     flex: 0.8;
     padding: 1.5rem;
