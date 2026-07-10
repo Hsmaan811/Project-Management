@@ -1,105 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Manager</title>
-    <link rel="stylesheet" href="/manager.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Task Manager</title>
+  <link rel="stylesheet" href="manager.css" />
 </head>
 <body>
-    <header class="top">
-        <nav class="navbar">
-            <div class="logo">Project Manager</div>
-            <button class="navbutton" id="calendarBtn">Calendar</button>
 
-            <dialog id="calendarDialog" class="calendar-modal">
-                <div class="calendar-layout-container">
-                    <div class="calendar-left-pane">
-                        <div class="calendar-header-nav">
-                            <button id="prevMonth">&#10094;</button>
-                            <h2 id="monthYear">June 2026</h2>
-                            <button id="nextMonth">&#10095;</button>
-                        </div>
+  <div id="loginOverlay">
+    <div class="login-box">
+      <h1>👋 Welcome</h1>
+      <p class="subtitle">Select your profile to continue</p>
+      <div id="loginUserList" class="user-list"></div>
+      <div style="border-top:1px solid #e5e7eb; margin:16px 0 12px;"></div>
+      <div class="add-user-row">
+        <input type="text" id="loginNewUserName" placeholder="New user name..." />
+        <button id="loginAddUserBtn">+ Add</button>
+      </div>
+      <div class="role-selector" style="margin-top:8px;">
+        <label><input type="radio" name="loginRole" value="manager" checked /> Manager</label>
+        <label><input type="radio" name="loginRole" value="employee" /> Employee</label>
+      </div>
+      <button id="loginAsNewUserBtn" class="btn" style="margin-top:12px;">Continue as New User</button>
+    </div>
+  </div>
 
-                        <div class="calendar-weekdays">
-                            <div>Sun</div>
-                            <div>Mon</div>
-                            <div>Tue</div>
-                            <div>Wed</div>
-                            <div>Thu</div>
-                            <div>Fri</div>
-                            <div>Sat</div>
-                        </div>
+  <header>
+    <nav class="navbar">
+      <div class="logo">📋 TaskFlow</div>
+      <div class="nav-right">
+        <button class="navbutton" id="calendarBtn">📅 Calendar</button>
+        <button class="navbutton green" id="addtskbtn">+ Add Task</button>
+        <button class="navbutton secondary" id="switchUserBtn">🔄 Switch User</button>
+        <div class="user-profile" id="profileClickArea" title="Click to edit name">
+          <img src="https://ui-avatars.com/api/?name=User&background=3b82f6&color=fff" alt="Profile" id="profile-avatar" />
+          <span class="user-name" id="profile-name">User</span>
+          <span class="role-badge" id="profile-role-badge">Manager</span>
+        </div>
+      </div>
 
-                        <div class="calendar-days-grid" id="calendarGrid">
-                            </div>
-                    </div>
-
-                    <div class="calendar-right-pane">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h3 id="selectedDate">Select a Date</h3>
-                            <button id="closeCalendar" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">&times;</button>
-                        </div>
-
-                        <div id="eventList" style="max-height: 200px; overflow-y: auto; margin-bottom: 20px;"></div>
-
-                        <div class="form-group">
-                            <input type="text" id="eventTitle" placeholder="Event title...">
-                        </div>
-
-                        <button id="addEventBtn" class="btn">Add Event</button>
-                    </div>
-                </div>
-            </dialog>
-
-            <div class="addtask">
-                <button class="navbutton" id="addtskbtn">Add Task</button>
+      <dialog id="calendarDialog" class="calendar-modal">
+        <div class="calendar-layout-container">
+          <div class="calendar-left-pane">
+            <div class="calendar-header-nav">
+              <button id="prevMonth">&#10094;</button>
+              <h2 id="monthYear">June 2026</h2>
+              <button id="nextMonth">&#10095;</button>
             </div>
-            
-            <dialog id="addtaskpopup">
-                <div class="modal-content">
-                    <h2>Add New Task</h2>
-                    <form id="addTaskForm">
-                        <div class="form-group">
-                            <label for="taskName">Task Name:</label>
-                            <input type="text" id="taskName" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="taskDescription">Description:</label>
-                            <textarea id="taskDescription"></textarea>
-                        </div>  
-                        <div class="form-group">
-                            <label for="duedate">Due Date (optional):</label>
-                            <input type="date" id="duedate" name="duedate">
-                        </div>  
-                        <button type="submit" class="btn">Add Task</button>
-                    </form>
-                </div>
-            </dialog>
-        </nav>
-    </header>
-
-    <main class="main-content">
-        <section class="sidebar">
-            <aside class="project-list">
-                <h3>Projects</h3>
-                <div id="projects-container"></div>
-            </aside>
-            <div class="add-project-inline">
-                <input type="text" id="newProjectInput" placeholder="New project name...">
-                <button id="addProjectBtn">+</button>
+            <div class="calendar-weekdays">
+              <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
             </div>
-        </section> 
-
-        <section class="task-list">
-            <div class="task-header">
-                <h2>Active Tasks</h2>
-                <span id="task-count" class="task-count">0 Tasks Remaining</span>
+            <div class="calendar-days-grid" id="calendarGrid"></div>
+          </div>
+          <div class="calendar-right-pane">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+              <h3 id="selectedDate">Select a Date</h3>
+              <button id="closeCalendar" style="background:none; border:none; font-size:24px; cursor:pointer; color:#64748b;">&times;</button>
             </div>
-            <div id="tasks-container" class="tasks-container"></div>
-        </section>
-    </main>
+            <div id="eventList"></div>
+            <div class="form-group">
+              <input type="text" id="eventTitle" placeholder="Event title..." />
+            </div>
+            <button id="addEventBtn" class="btn">Add Event</button>
+          </div>
+        </div>
+      </dialog>
 
-    <script src="/main.js"></script>
+      <dialog id="addtaskpopup">
+        <div class="modal-content">
+          <h2>➕ New Task</h2>
+          <form id="addTaskForm">
+            <div class="form-group">
+              <label for="taskName">Task Name *</label>
+              <input type="text" id="taskName" required />
+            </div>
+            <div class="form-group">
+              <label for="taskDescription">Description</label>
+              <textarea id="taskDescription" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="duedate">Due Date</label>
+              <input type="date" id="duedate" />
+            </div>
+            <div class="form-group" id="projectSelectGroup">
+              <label for="taskProject">Project</label>
+              <select id="taskProject"></select>
+            </div>
+            <div class="form-group" id="projectAssignGroup" style="display:none;">
+              <label for="taskProjectAssign">Assign Project to</label>
+              <select id="taskProjectAssign"></select>
+            </div>
+            <div class="form-group" id="assigneeFieldGroup">
+              <label for="taskAssignee">Assign Task to</label>
+              <select id="taskAssignee"></select>
+            </div>
+            <button type="submit" class="btn">Add Task</button>
+          </form>
+        </div>
+      </dialog>
+
+      <dialog id="editProfileDialog">
+        <div class="modal-content">
+          <h2> Edit Profile</h2>
+          <form id="editProfileForm">
+            <div class="form-group">
+              <label for="editProfileName">Name</label>
+              <input type="text" id="editProfileName" required />
+            </div>
+            <button type="submit" class="btn">Update</button>
+          </form>
+        </div>
+      </dialog>
+    </nav>
+  </header>
+
+  <main class="main-content">
+
+    <section class="sidebar">
+      <div class="sidebar-section" id="employeeListSection">
+        <h3>👥 Team Members</h3>
+        <div id="employeeListContainer"></div>
+      </div>
+
+      <div class="sidebar-section project-list">
+        <h3>📁 Projects</h3>
+        <div id="projects-container"></div>
+        <div class="add-project-inline">
+          <input type="text" id="newProjectInput" placeholder="New project..." />
+          <button id="addProjectBtn">+</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="task-list">
+      <section class="dashboard">
+        <h2>📊 Dashboard</h2>
+        <div class="dashboard-cards">
+          <div class="stat-card">
+            <span class="stat-label">Projects</span>
+            <span class="stat-number" id="stat-projects">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Total Tasks</span>
+            <span class="stat-number" id="stat-total-tasks">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Completed</span>
+            <span class="stat-number" id="stat-completed-tasks">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Progress</span>
+            <span class="stat-number" id="stat-progress">0%</span>
+          </div>
+          <div class="stat-card" id="stat-employees-card">
+            <span class="stat-label">Employees</span>
+            <span class="stat-number" id="stat-employees">0</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="task-header">
+        <h2 id="taskListTitle">Tasks</h2>
+        <span id="task-count" class="task-count">0 Tasks</span>
+      </div>
+
+      <div id="tasks-container" class="tasks-container">
+        <div class="empty-state">
+          <p>No tasks yet</p>
+          <span class="sub">Add a task or select a project</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="main.js"></script>
 </body>
 </html>
